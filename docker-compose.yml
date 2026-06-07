@@ -1,0 +1,54 @@
+services:
+  nginx:
+    image: nginx:latest
+
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./coolspot_backend/media:/media
+
+    depends_on:
+      - backend
+      - frontend
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: coolspot_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password!1
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./coolspot_backend
+
+    restart: unless-stopped
+
+    env_file:
+      - ./coolspot_backend/.env
+
+    volumes:
+      - ./coolspot_backend/media:/app/media
+
+    expose:
+      - "8000"
+
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./coolspot_frontend
+
+    restart: unless-stopped
+
+    expose:
+      - "80"
+
+volumes:
+  postgres_data:
