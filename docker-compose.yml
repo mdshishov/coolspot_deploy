@@ -1,52 +1,50 @@
 services:
   nginx:
+    container_name: nginx
     image: nginx:latest
-
     restart: unless-stopped
-
     ports:
       - "80:80"
-
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./coolspot_backend/media:/media
-
+      - ../media:/media
     depends_on:
       - backend
       - frontend
 
   postgres:
+    container_name: postgres
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_DB: coolspot_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password!1
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
-    build: ./coolspot_backend
-
+    container_name: backend
+    build: ../coolspot_backend
     restart: unless-stopped
-
     env_file:
-      - ./coolspot_backend/.env
-
+      - .env
     volumes:
-      - ./coolspot_backend/media:/app/media
-
+      - ../media:/app/media
     expose:
       - "8000"
-
     depends_on:
       - postgres
 
   frontend:
-    build: ./coolspot_frontend
-
+    container_name: frontend
+    build: ../coolspot_frontend
     restart: unless-stopped
-
     expose:
       - "80"
 
